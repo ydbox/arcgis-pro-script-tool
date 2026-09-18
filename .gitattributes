@@ -1,0 +1,2 @@
+# 强制 LF：部分 AI 解析 SKILL.md 的 frontmatter 时只认 LF
+* text=auto eol=lf
