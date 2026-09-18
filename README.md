@@ -6,15 +6,15 @@
 
 ## 安装
 
-本仓库是私有仓库，需要先被邀请为协作者。
-
 ```bash
 # 全局安装（所有项目都能用）
-gh repo clone ydbox/arcgis-pro-script-tool ~/.claude/skills/arcgis-pro-script-tool
+git clone https://github.com/ydbox/arcgis-pro-script-tool.git ~/.claude/skills/arcgis-pro-script-tool
 
 # 或者只装到某个项目
-gh repo clone ydbox/arcgis-pro-script-tool <项目目录>/.claude/skills/arcgis-pro-script-tool
+git clone https://github.com/ydbox/arcgis-pro-script-tool.git <项目目录>/.claude/skills/arcgis-pro-script-tool
 ```
+
+Windows 下 `~` 指 `C:\Users\<用户名>`。
 
 装好后重启 Claude Code。说"写一个 ArcGIS Pro 脚本工具……"或者贴出工具参数表，这个 skill 就会自动触发。
 
