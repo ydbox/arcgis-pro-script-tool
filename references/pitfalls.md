@@ -63,7 +63,7 @@
 
 - 读 srt、csv、txt：依次尝试 `utf-8-sig`、`gbk`、`gb18030`。写 CSV 用 `utf-8-sig`，Excel 打开才不会乱码。
 - 拼音首字母：环境里已经有 `pypinyin`，不要自己维护 GB2312 编码区间表（多音字、生僻字会出错）。
-- **【实测】命令行测试时的中文输出**：arcpy 的 AddMessage 由原生代码按系统代码页（GBK）输出，设置 `PYTHONIOENCODING` 对它**不起作用**。在 cmd 窗口里直接运行能正常显示。在 Claude Code 的 Bash 里运行时，**不要**设 `PYTHONIOENCODING`（让 Python 的 print 和 traceback 也用 GBK，编码保持一致），把输出通过管道交给 `iconv -f GBK -t UTF-8`，退出码看 `${PIPESTATUS[0]}`。
+- **【实测】命令行测试时的中文输出**：arcpy 的 AddMessage 由原生代码按系统代码页（GBK）输出，`PYTHONIOENCODING` 管不到它。可是一旦设了这个变量（有些 AI 的终端默认就设了），Python 自己的 print 和 traceback 会改用 UTF-8，两种编码混在一起，怎么解码都有一部分是乱码。PowerShell 回传输出时还会再转一次编码。所以**不要靠调终端编码**，统一用 `scripts/run_tool_test.py` 运行：它会清掉这些变量，按系统代码页解码，再以 UTF-8 输出，并另存一份日志文件。在 Bash 和 PowerShell 下都验证过。
 
 ## 7. 临时数据、锁、环境
 

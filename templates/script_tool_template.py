@@ -14,8 +14,10 @@
     - <例：来源要素名称为空的行视为表格结束，而不是跳过>
 
 运行环境：ArcGIS Pro 3.x / Python 3（arcgispro-py3）
-命令行测试（可选参数留空时写 #；在 cmd 窗口里运行，中文可以正常显示）：
-    "<Pro 安装目录>\\bin\\Python\\envs\\arcgispro-py3\\python.exe" 本文件.py <参数0> <参数1> ...
+命令行测试（可选参数留空时写 #）：
+    在 cmd 窗口里直接运行：
+        "<Pro 安装目录>\\bin\\Python\\envs\\arcgispro-py3\\python.exe" 本文件.py <参数0> <参数1> ...
+    由 AI 在终端里运行：用 skill 自带的 scripts/run_tool_test.py，中文不会乱码
 """
 import os
 import time

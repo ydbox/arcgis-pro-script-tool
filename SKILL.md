@@ -1,8 +1,9 @@
 ---
 name: arcgis-pro-script-tool
 description: "Use when writing, modifying, or debugging an ArcGIS Pro script tool or arcpy script (Python 3) — e.g. 用户说「写一个 ArcGIS Pro 脚本工具」「适配我的工具参数表」、批量处理 GDB / 要素类 / 要素数据集 / 字段 / 栅格、按 Excel 规则表赋值或建库、输出 Excel 统计表、把结果加到活动地图；also for .pyt Python toolboxes and upgrading legacy ArcMap 10.x / Python 2.7 scripts."
+compatibility: "Windows + ArcGIS Pro 3.x (arcpy). Works with any agent that supports Agent Skills (Claude Code, Codex, Cursor, Gemini CLI, Copilot, Trae, Kiro, CodeBuddy, Qoder, ...)."
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   source: local-case-analysis
   analyzed_cases: "20 prompts (提示词案例) + 36 scripts (py)"
   verified_on: "ArcGIS Pro 3.7.1 / Python 3.13"
@@ -15,7 +16,7 @@ metadata:
 ## 何时用 / 何时不用
 
 - 用：写新的 arcpy 脚本工具；改造已有工具（单库改批量、加 Excel 输出、修 bug）；设计工具参数；写 `.pyt`；把 ArcMap 10.x 脚本迁移到 Pro。
-- 不用：只在 Pro 里临时跑一次、不需要做成工具的操作——这种直接用 ArcGIS MCP（`mcp__arcgis__*`）或给用户一行 GP 命令就行。
+- 不用：只在 Pro 里临时跑一次、不需要做成工具的操作——这种如果当前 AI 连着 ArcGIS Pro 的 MCP 服务就直接操作，否则给用户一行 GP 命令就行。
 
 ## 工作流
 
@@ -42,7 +43,7 @@ metadata:
 - 涉及面积、距离时，数据是投影坐标系还是地理坐标系？
 - 需要 Spatial Analyst、3D Analyst 等扩展许可吗？
 
-有**阻塞问题**就用 AskUserQuestion 集中问：一轮最多 4 个问题，每个问题给 2~4 个选项，第一项是推荐项。目标是**一轮问清**，历史上"边坡"工具来回确认了 4 轮以上。不阻塞、有常规做法的，直接按默认做，并在交付时写明"假设"。用户确认过的口径，写进脚本 docstring 的"需求确认记录"。
+有**阻塞问题**就集中问：当前 AI 有提问工具的就用它（例如 Claude Code 的 AskUserQuestion）；没有的话，在回复里列出带编号的选择题，然后停下来等用户回答。一轮最多 4 个问题，每个问题给 2~4 个选项，第一项是推荐项。目标是**一轮问清**，历史上"边坡"工具来回确认了 4 轮以上。不阻塞、有常规做法的，直接按默认做，并在交付时写明"假设"。用户确认过的口径，写进脚本 docstring 的"需求确认记录"。
 
 大工具（例如网格赋值的"面 → 线 → 点 → 栅格"）**分阶段交付**：先搭好统一的调度结构，每个阶段写完就验证，再做下一阶段。
 
@@ -54,9 +55,18 @@ metadata:
 
 ### 4. 自检（交付前必须做）
 
-1. **语法检查**（必做）：用 Pro 的 Python 执行 `python -m py_compile <脚本>`。本机 Python 路径：`E:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3-clone\python.exe`；其他机器上是 `<Pro 安装目录>\bin\Python\envs\arcgispro-py3\python.exe`。
-2. **实跑**（有测试数据时必做）：用命令行运行 `python 脚本.py 参数0 参数1 …`，可选参数留空时写 `#`。`GetParameterAsText` 会读取命令行参数，这一点已实测。在 Bash 里这样运行，中文才能正常显示：`"<Pro python>" 脚本.py … 2>&1 | iconv -f GBK -t UTF-8`，退出码看 `${PIPESTATUS[0]}`。不要设 `PYTHONIOENCODING`，原因见 pitfalls §6。**会修改输入数据的工具，先把测试数据复制一份，在副本上跑。** 然后按验收标准检查输出：要素数量、字段、取值、Excel 内容。
-3. 如果 ArcGIS Pro MCP 已连接（`mcp__arcgis__*`），也可以在用户当前打开的 Pro 里验证。
+先找到 Pro 的 Python（下文写作 `<Pro python>`）：
+- 安装目录记录在注册表 `HKLM\SOFTWARE\ESRI\ArcGISPro` 的 `InstallDir`；
+- Python 在 `<InstallDir>\bin\Python\envs\arcgispro-py3\python.exe`；
+- 用户在 Pro 里换过环境（例如克隆出 `arcgispro-py3-clone`），就用那个环境里的 python.exe。
+
+1. **语法检查**（必做）：`<Pro python> -m py_compile <脚本>`。
+2. **实跑**（有测试数据时必做）：`<Pro python> scripts/run_tool_test.py <脚本> <参数0> <参数1> …`，可选参数留空时写 `#`。
+   - `GetParameterAsText` 会读到这些命令行参数（已实测）。
+   - 这个运行脚本在 Bash、PowerShell、cmd 下中文输出都正常，退出码与工具一致，完整输出另存为 `<脚本>.test.log`（UTF-8）。终端显示乱码时，直接读这个日志文件。
+   - **会修改输入数据的工具，先把测试数据复制一份，在副本上跑。**
+   - 跑完按验收标准检查输出：要素数量、字段、取值、Excel 内容。
+3. 如果当前 AI 连着 ArcGIS Pro 的 MCP 服务，也可以在用户当前打开的 Pro 里验证。
 4. 如果 arcpy 因为许可或登录无法独立运行，照实说明"只做了语法检查，没有实跑"。
 
 ### 5. 交付
@@ -140,6 +150,7 @@ metadata:
 | `references/pitfalls.md` | 遍历、字段、几何、Excel、编码、锁、性能、需求文档本身的坑 |
 | `references/request-template.md` | 用户需求不全时，给用户的填空模板（新版，说明了旧模板哪些内容不用再写） |
 | `templates/script_tool_template.py` | 每个新脚本的起点 |
+| `scripts/run_tool_test.py` | 自检时在命令行实跑工具；任何终端下中文都不乱码 |
 
 如果本机有 `E:\ai_coding\prj8\py\`，可以参考以下范本：
 - `BatchDeleteEmptyFields批量删除空值字段.py`：短小完整，结尾有汇总。
